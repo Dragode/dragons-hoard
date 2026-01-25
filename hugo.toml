@@ -1,0 +1,48 @@
+baseURL = 'https://Dragode.github.io/dragons-hoard/'
+languageCode = 'zh-cn'
+title = "Dragon's Hoard"
+theme = 'PaperMod'
+
+[params]
+  # 显示阅读时间
+  showReadingTime = true
+  # 主题模式：auto/light/dark
+  defaultTheme = "auto"
+  # 显示代码复制按钮
+  showCodeCopyButtons = true
+  # 显示分享按钮
+  showShareButtons = true
+  # 显示文章导航
+  showPostNavLinks = true
+  # 显示面包屑导航
+  showBreadCrumbs = true
+
+[params.homeInfoParams]
+  Title = "Dragon's Hoard 🐉"
+  Content = "每日学习心得，点滴积累成宝藏"
+
+[[params.socialIcons]]
+  name = "github"
+  url = "https://github.com/Dragode"
+
+[menu]
+  [[menu.main]]
+    identifier = "posts"
+    name = "文章"
+    url = "/posts/"
+    weight = 10
+  [[menu.main]]
+    identifier = "tags"
+    name = "标签"
+    url = "/tags/"
+    weight = 20
+  [[menu.main]]
+    identifier = "archives"
+    name = "归档"
+    url = "/archives/"
+    weight = 30
+
+# 启用标签和分类
+[taxonomies]
+  tag = "tags"
+  category = "categories"

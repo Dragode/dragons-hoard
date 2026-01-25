@@ -1,0 +1,16 @@
+# Hugo 构建输出
+/public/
+/resources/_gen/
+
+# 编辑器
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+
+# Hugo 模块
+/go.sum
+/go.mod
