@@ -6,7 +6,7 @@ tags = ['AI', 'Agent']
 categories = ['随笔']
 +++
 
-> 原文来源：Andrej Karpathy X Post (2025年12月)
+> 原文来源：[Andrej Karpathy X Post (2025年12月)](https://x.com/karpathy/status/2015883857489522876)
 
 ---
 
