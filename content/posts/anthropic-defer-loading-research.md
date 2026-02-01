@@ -326,10 +326,19 @@ claude
 |------|------|------|
 | **2025-11-24** | Anthropic 发布 Advanced Tool Use（含 defer_loading）API | - |
 | **2025-12-01** | 社区提交 Feature Request（GitHub Issue #12836） | - |
-| **2025-12-20** | 实验性标志 `ENABLE_EXPERIMENTAL_MCP_CLI` 可用 | ~2.1.x |
+| **2025-12-20** | 实验性标志 `ENABLE_EXPERIMENTAL_MCP_CLI` 可用（已弃用） | ~2.1.x |
 | **2026-01-14** | Anthropic 官方宣布 Claude Code 支持 MCP Tool Search | 2.1.7 |
-| **2026-01-14** | **MCP Tool Search auto mode 默认启用** | **2.1.7** |
+| **2026-01-14** | **MCP Tool Search auto mode 默认启用**，引入 `ENABLE_TOOL_SEARCH` 环境变量 | **2.1.7** |
 | **2026-01-15** | 2.1.9 版本添加 `auto:N` 语法自定义阈值 | 2.1.9 |
+
+**`ENABLE_TOOL_SEARCH` 环境变量**（2.1.7+ 引入）：
+
+| 值 | 说明 |
+|----|------|
+| `auto` | 默认值，MCP 工具超过 10% 上下文时自动启用 |
+| `auto:N` | 自定义阈值（2.1.9+），N 为百分比 |
+| `true` | 强制启用 |
+| `false` | 禁用（解决 AWS Bedrock 兼容性问题） |
 
 ### 详细发展过程
 
