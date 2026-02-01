@@ -187,6 +187,108 @@ Anthropic 内部测试显示，工具定义曾消耗高达 **134K tokens**。
 | **Regex 长度** | 最大 200 字符 |
 | **框架支持** | 需直接使用 Anthropic SDK，LangChain 等框架暂未支持 |
 | **不兼容 Tool Use Examples** | 两个特性不能同时使用 |
+| **AWS Bedrock 限制** | 仅 InvokeModel API 支持，Converse API 不支持（详见下节） |
+
+## 七点五、AWS Bedrock 兼容性问题
+
+### 问题现象
+
+使用 AWS Bedrock 作为 Claude Code 后端时，可能遇到以下错误：
+
+```
+502 {"error":"Failed to invoke AWS Bedrock: operation error Bedrock Runtime:
+InvokeModelWithResponseStream, https response error StatusCode: 400,
+RequestID: xxx, ValidationException: tools.21.custom.defer_loading:
+Extra inputs are not permitted"}
+```
+
+### 根本原因
+
+AWS Bedrock 对 `defer_loading` 的支持**取决于使用的 API 类型**：
+
+| AWS Bedrock API | defer_loading 支持 | Beta Header |
+|-----------------|-------------------|-------------|
+| **InvokeModel / InvokeModelWithResponseStream** | ✅ 支持 | `tool-search-tool-2025-10-19` |
+| **Converse / ConverseStream API** | ❌ 不支持 | - |
+
+AWS 官方文档明确指出：
+> "Note that this feature is currently only available via the **InvokeModel** and **InvokeModelWithResponseStream** APIs."
+
+当 Claude Code 使用 Bedrock 的 **Converse API** 时，`defer_loading` 参数会被视为无效字段，触发 `ValidationException`。
+
+### 解决方案
+
+#### 方案 1：禁用 MCP Tool Search（推荐）
+
+在 `~/.claude/settings.json` 中添加 `MCPSearch` 到 `permissions.deny`：
+
+```json
+{
+  "permissions": {
+    "deny": ["MCPSearch"]
+  }
+}
+```
+
+这会禁用 Tool Search 功能，Claude Code 回退到传统的全量加载模式。
+
+#### 方案 2：使用环境变量禁用
+
+```bash
+# 方式 1：禁用 Tool Search
+export ENABLE_TOOL_SEARCH=false
+
+# 方式 2：禁用所有实验性 Beta 功能
+export CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS=1
+```
+
+**注意**：环境变量需要在启动 Claude Code 的同一 shell 会话中设置。
+
+#### 方案 3：切换到 InvokeModel API（适用于直接 API 调用）
+
+如果你是直接调用 AWS Bedrock API（而非通过 Claude Code），可以：
+
+1. 使用 `InvokeModel` 或 `InvokeModelWithResponseStream` API
+2. 添加 Beta Header：`"anthropic_beta": ["tool-search-tool-2025-10-19"]`
+
+```json
+{
+    "anthropic_version": "bedrock-2023-05-31",
+    "anthropic_beta": ["tool-search-tool-2025-10-19"],
+    "tools": [{
+        "type": "tool_search_tool_regex",
+        "name": "tool_search_tool_regex"
+    }, {
+        "name": "your_tool",
+        "defer_loading": true,
+        ...
+    }]
+}
+```
+
+### 各平台支持情况对比
+
+| 平台 | defer_loading 支持 | 备注 |
+|------|-------------------|------|
+| **Claude API（直连）** | ✅ 完全支持 | 推荐方式 |
+| **AWS Bedrock InvokeModel** | ✅ 支持 | 需添加 Beta Header |
+| **AWS Bedrock Converse** | ❌ 不支持 | 会报 ValidationException |
+| **Google Vertex AI** | ✅ 支持 | - |
+
+### 配置验证
+
+修改配置后，重启 Claude Code 并检查是否生效：
+
+```bash
+# 检查环境变量
+echo $ENABLE_TOOL_SEARCH
+echo $CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS
+
+# 启动 Claude Code
+claude
+```
+
+如果配置正确，应该不再出现 `defer_loading: Extra inputs are not permitted` 错误。
 
 ## 八、总结
 
@@ -306,8 +408,15 @@ MCP 工具描述占用 > 10% 上下文？
 ```json
 // settings.json
 {
-  "disallowedTools": ["MCPSearch"]
+  "permissions": {
+    "deny": ["MCPSearch"]
+  }
 }
+```
+
+或使用环境变量：
+```bash
+export ENABLE_TOOL_SEARCH=false
 ```
 
 #### 自定义阈值（2.1.9+）
@@ -363,7 +472,7 @@ MCP 工具描述占用 > 10% 上下文？
 | **Claude Code 何时支持** | 2026-01-14，版本 2.1.7 |
 | **从 API 到 CLI 的延迟** | ~51 天 |
 | **默认行为** | 自动启用（MCP 工具 > 10% 上下文时） |
-| **可否禁用** | 可以，添加 `MCPSearch` 到 `disallowedTools` |
+| **可否禁用** | 可以，在 `permissions.deny` 中添加 `MCPSearch` |
 
 ---
 
