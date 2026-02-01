@@ -218,31 +218,35 @@ AWS 官方文档明确指出：
 
 ### 解决方案
 
-#### 方案 1：禁用 MCP Tool Search（推荐）
+#### 方案 1：使用环境变量禁用（推荐）
 
-在 `~/.claude/settings.json` 中添加 `MCPSearch` 到 `permissions.deny`：
+在 `~/.claude/settings.json` 的 `env` 字段中添加：
 
 ```json
 {
-  "permissions": {
-    "deny": ["MCPSearch"]
+  "env": {
+    "ENABLE_TOOL_SEARCH": "false"
   }
 }
 ```
 
-这会禁用 Tool Search 功能，Claude Code 回退到传统的全量加载模式。
-
-#### 方案 2：使用环境变量禁用
+或在 shell 中设置：
 
 ```bash
-# 方式 1：禁用 Tool Search
 export ENABLE_TOOL_SEARCH=false
+```
 
-# 方式 2：禁用所有实验性 Beta 功能
+这是**最可靠的解决方案**，经实际验证可以完全避免 `defer_loading` 参数被发送到 Bedrock。
+
+`ENABLE_TOOL_SEARCH` 环境变量随 Claude Code **2.1.7 版本**（2026-01-14）与 MCP Tool Search 功能一起引入，与文章中的时间线完全吻合。
+
+#### 方案 2：禁用所有实验性 Beta 功能
+
+```bash
 export CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS=1
 ```
 
-**注意**：环境变量需要在启动 Claude Code 的同一 shell 会话中设置。
+此方案会禁用所有实验性功能，可能影响其他 Beta 特性的使用。
 
 #### 方案 3：切换到 InvokeModel API（适用于直接 API 调用）
 
@@ -408,15 +412,10 @@ MCP 工具描述占用 > 10% 上下文？
 ```json
 // settings.json
 {
-  "permissions": {
-    "deny": ["MCPSearch"]
+  "env": {
+    "ENABLE_TOOL_SEARCH": "false"
   }
 }
-```
-
-或使用环境变量：
-```bash
-export ENABLE_TOOL_SEARCH=false
 ```
 
 #### 自定义阈值（2.1.9+）
@@ -472,7 +471,7 @@ export ENABLE_TOOL_SEARCH=false
 | **Claude Code 何时支持** | 2026-01-14，版本 2.1.7 |
 | **从 API 到 CLI 的延迟** | ~51 天 |
 | **默认行为** | 自动启用（MCP 工具 > 10% 上下文时） |
-| **可否禁用** | 可以，在 `permissions.deny` 中添加 `MCPSearch` |
+| **可否禁用** | 可以，在 `env` 中设置 `ENABLE_TOOL_SEARCH=false` |
 
 ---
 
