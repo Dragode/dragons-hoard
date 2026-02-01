@@ -6,8 +6,6 @@ tags = ['AI', 'Agent', 'MCP', 'Claude Code', 'API']
 categories = ['技术调研']
 +++
 
-# Anthropic defer_loading 深度调研报告
-
 > 调研日期：2026-02-01
 
 ## 一、概述
