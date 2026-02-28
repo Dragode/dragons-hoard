@@ -184,7 +184,7 @@ Skill 支持在 frontmatter 中声明 `context: fork`，此时 Skill 会**自动
 name: my-research-skill
 description: 深度调研技术方案
 context: fork
-agent_type: general-purpose
+agent: general-purpose
 ---
 
 执行深度调研任务...
@@ -261,7 +261,64 @@ const result = await claude({
 
 ---
 
-## 5. 参考资料
+## 5. 实践验证（2026-02-28 补充）
+
+### 5.1 验证方式
+
+基于调研结论，创建了 `research-agent` Skill（`~/.claude/skills/research-agent/SKILL.md`），使用 `context: fork` 机制：
+
+```yaml
+---
+name: research-agent
+description: 技术调研（自动 fork 到独立 subagent）
+context: fork
+agent: general-purpose
+---
+```
+
+调用该 Skill 执行一次搜索任务，验证 `context: fork` 是否真的自动 fork 到 subagent。
+
+### 5.2 验证结果
+
+**`context: fork` 机制确认生效。** Skill 返回标记了 `(forked execution)`，证明：
+1. Skill 内容确实作为 prompt 注入到独立 subagent 中执行
+2. subagent 拥有完整工具集（执行了 serpapi 搜索、jina 网页阅读等）
+3. 搜索过程和原始 JSON 不会污染主上下文
+4. 仅最终报告结果返回给主 Agent
+
+### 5.3 关键修正
+
+验证过程中发现调研报告中的一处错误：
+
+| 原文 | 修正 | 来源 |
+|---|---|---|
+| `agent_type: general-purpose` | `agent: general-purpose` | Anthropic 官方 Skills 文档 |
+
+正确的 frontmatter 字段名是 `agent`（非 `agent_type`）。`agent_type` 是 Task 工具的参数名，而 Skill frontmatter 中对应的字段名为 `agent`。
+
+### 5.4 官方文档确认
+
+验证搜索同时确认了 `context: fork` 的官方来源：
+
+| 证据 | 内容 |
+|---|---|
+| Anthropic Skills 文档 | frontmatter 字段表中明确列出 `context` 字段，值为 `fork` 时在 forked subagent context 中运行 |
+| Anthropic Sub-agents 文档 | 说明 `context: fork` 与 subagent 的 `skills` 字段是同一底层系统的两个方向 |
+| Changelog v2.1.0（2026-01-07） | "Added support for running skills and slash commands in a forked sub-agent context" |
+
+### 5.5 使用注意事项
+
+| 要点 | 说明 |
+|---|---|
+| Skill 必须包含明确任务 | 纯指导方针（如"遵循这些 API 规范"）没有可执行任务，subagent 会返回空结果 |
+| 不支持嵌套 | forked subagent 不能再 fork subagent |
+| CLAUDE.md 仍会加载 | forked subagent 会继承项目的 CLAUDE.md 指令 |
+| 支持 `allowed-tools` | 可限制 forked subagent 的工具访问权限 |
+| 支持动态注入 | 可用 `` !`command` `` 语法在发送前执行 shell 命令注入输出 |
+
+---
+
+## 6. 参考资料
 
 ### 官方文档
 
